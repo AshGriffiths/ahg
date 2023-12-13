@@ -13,7 +13,9 @@ import sys
 import zlib
 
 argparser = argparse.ArgumentParser(description="An attempt at implementing git.")
+
 argsubparsers = argparser.add_subparsers(title="Commands", dest="command")
+# init
 argsp = argsubparsers.add_parser("init", help="Initialize a new, empty repository.")
 argsp.add_argument(
     "path",
@@ -22,6 +24,7 @@ argsp.add_argument(
     default=".",
     help="Where to create the repository.",
 )
+# cat-file
 argsp = argsubparsers.add_parser(
     "cat-file", help="Provide content of repository objects"
 )
@@ -32,6 +35,7 @@ argsp.add_argument(
     help="Specify the type",
 )
 argsp.add_argument("object", metavar="object", help="The object to display")
+# hash-object
 argsp = argsubparsers.add_parser(
     "hash-object", help="Compute object ID and optionally creates a blob from a file"
 )
@@ -50,13 +54,21 @@ argsp.add_argument(
     help="Actually write the object into the database",
 )
 argsp.add_argument("path", help="Read object from <file>")
+# log
 argsp = argsubparsers.add_parser("log", help="Display history of a given commit.")
 argsp.add_argument("commit", default="HEAD", nargs="?", help="Commit to start at.")
+# ls-tree
 argsp = argsubparsers.add_parser("ls-tree", help="Pretty-print a tree object.")
 argsp.add_argument(
     "-r", dest="recursive", action="store_true", help="Recurse into sub-trees"
 )
 argsp.add_argument("tree", help="A tree-ish object.")
+# checkout (basic version that only checks out to an empty directory to avoid potentially wrecking files not under gits control)
+argsp = argsubparsers.add_parser(
+    "checkout", help="Checkout a commit inside of a directory."
+)
+argsp.add_argument("commit", help="THe commit or tree to checkout.")
+argsp.add_argument("path", help="The EMPTY directory to checkout on.")
 argsubparsers.required = True
 
 
@@ -489,6 +501,20 @@ def ls_tree(repo: GitRepository, ref: str, recursive: bool = False, prefix: str 
             ls_tree(repo, item.sha, recursive, os.path.join(prefix, item.path))
 
 
+def tree_checkout(repo: GitRepository, tree: GitTree, path: str) -> None:
+    for item in tree.items:
+        obj = object_read(repo, item.sha)
+        dest = os.path.join(path, item.path)
+
+        if isinstance(obj, GitTree):
+            os.mkdir(dest)
+            tree_checkout(repo, obj, dest)
+        elif isinstance(obj, GitBlob):
+            # TODO: Handle symlinks (Mode 12)
+            with open(dest, "wb") as f:
+                f.write(obj.blobdata)
+
+
 def cmd_add(args: argparse.Namespace) -> None:
     raise NotImplementedError()
 
@@ -503,7 +529,24 @@ def cmd_check_ignore(args: argparse.Namespace) -> None:
 
 
 def cmd_checkout(args: argparse.Namespace) -> None:
-    raise NotImplementedError()
+    repo = repo_find()
+
+    obj = object_read(repo, object_find(repo, args.commit))
+    if obj.fmt == b"commit":
+        assert isinstance(obj, GitCommit)
+        obj = object_read(repo, obj.kvlm[b"tree"].decode("ascii"))
+        assert isinstance(obj, GitTree)
+
+    if os.path.exists(args.path):
+        if not os.path.isdir(args.path):
+            raise Exception(f"Not not a directory {args.path}")
+        if os.listdir(args.path):
+            raise Exception(f"Not empty {args.path}")
+    else:
+        os.makedirs(args.path)
+
+    assert isinstance(obj, GitTree)
+    tree_checkout(repo, obj, os.path.realpath(args.path))
 
 
 def cmd_commit(args: argparse.Namespace) -> None:
