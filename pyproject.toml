@@ -12,7 +12,7 @@ rich = "^13.7.0"
 shellingham = "^1.5.4"
 
 [tool.poetry.scripts]
-ahg = "ahg:main"
+ahg = "ahg.main:main"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
