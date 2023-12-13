@@ -1,3 +1,3 @@
-An attempt at following the ["Write Yourself A Git" tutorial](https://wyag.thb.lt/) by Thibault Polge
+An custom implementation of git, intended as a way for me to get really familiar with the inner workings of git.
 
-But making it more pythonic, and then maybe adding the missing features
+Based on ["Write Yourself A Git" tutorial](https://wyag.thb.lt/) by Thibault Polge
