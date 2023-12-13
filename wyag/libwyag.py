@@ -295,7 +295,7 @@ def object_write(obj: GitObject, repo: GitRepository | None = None) -> str:
     return sha
 
 
-def object_find(repo: GitRepository, name: str, fmt: str | None = None) -> str:
+def object_find(repo: GitRepository, name: str, fmt: bytes | None = None) -> str:
     return name
 
 
@@ -318,7 +318,7 @@ def object_hash(fd: BufferedReader, fmt: str, repo: GitRepository | None = None)
     return object_write(obj, repo)
 
 
-def cat_file(repo: GitRepository, obj: str, fmt: str | None = None) -> None:
+def cat_file(repo: GitRepository, obj: str, fmt: bytes | None = None) -> None:
     gobj: GitObject = object_read(repo, object_find(repo, obj, fmt=fmt))
 
     sys.stdout.buffer.write(gobj.serialize())
@@ -459,6 +459,36 @@ def tree_serialize(obj: GitTree) -> bytes:
     return ret
 
 
+def ls_tree(repo: GitRepository, ref: str, recursive: bool = False, prefix: str = ""):
+    sha = object_find(repo, ref, fmt=b"tree")
+    obj = object_read(repo, sha)
+    assert isinstance(obj, GitTree)
+    for item in obj.items:
+        if len(item.mode) == 5:
+            mode = item.mode[0:1]
+        else:
+            mode = item.mode[0:2]
+
+        match mode:
+            case b"04":
+                type = "tree"  # another directory
+            case b"10":
+                type = "blob"  # file
+            case b"12":
+                type = "blob"  # symlink as blob
+            case b"16":
+                type = "commit"  # submodule
+            case _:
+                raise Exception(f"Weird tree lead mode {item.mode.decode('ascii')}")
+
+        if not (recursive and type == "tree"):  # leaf node
+            print(
+                f"{'0' * (6 - len(item.mode)) + item.mode.decode('ascii')} {type} {item.sha}\t{os.path.join(prefix, item.path)}"
+            )
+        else:  # recurse
+            ls_tree(repo, item.sha, recursive, os.path.join(prefix, item.path))
+
+
 def cmd_add(args: argparse.Namespace) -> None:
     raise NotImplementedError()
 
@@ -508,7 +538,8 @@ def cmd_ls_files(args: argparse.Namespace) -> None:
 
 
 def cmd_ls_tree(args: argparse.Namespace) -> None:
-    return
+    repo = repo_find()
+    ls_tree(repo, args.tree, args.recursive)
 
 
 def cmd_rev_parse(args: argparse.Namespace) -> None:
