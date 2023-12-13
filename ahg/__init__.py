@@ -1,1 +1,1 @@
-from .libwyag import main as main
+from .main import main as main

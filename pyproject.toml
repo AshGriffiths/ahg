@@ -7,9 +7,18 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+typer = "^0.9.0"
+rich = "^13.7.0"
+shellingham = "^1.5.4"
 
 [tool.poetry.scripts]
 ahg = "ahg:main"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+black = "^23.12.0"
+flake8 = "^6.1.0"
+mypy = "^1.7.1"
 
 [build-system]
 requires = ["poetry-core"]
