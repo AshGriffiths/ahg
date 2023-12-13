@@ -54,7 +54,8 @@ argsp.add_argument(
     "-r", dest="recursive", action="store_true", help="Recurse into sub-trees"
 )
 argsp.add_argument("tree", help="A tree-ish object.")
-# checkout (basic version that only checks out to an empty directory to avoid potentially wrecking files not under gits control)
+# checkout (basic version that only checks out to an empty directory
+# to avoid potentially wrecking files not under gits control)
 argsp = argsubparsers.add_parser(
     "checkout", help="Checkout a commit inside of a directory."
 )

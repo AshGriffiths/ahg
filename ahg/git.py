@@ -131,7 +131,8 @@ def repo_dir(repo: GitRepository, *path: str, mkdir: bool = False) -> str | None
 
 def repo_file(repo: GitRepository, *path: str, mkdir: bool = False):
     """Same as repo_path, but create dirname(*path) if absent.  For example,
-    repo_file(r, \"refs\", \"remotes\", \"origin\", \"HEAD\") will create .git/refs/remotes/origin.
+    repo_file(r, \"refs\", \"remotes\", \"origin\", \"HEAD\")
+    will create .git/refs/remotes/origin.
     """
     if repo_dir(repo, *path[:-1], mkdir=mkdir):
         return repo_path(repo, *path)
@@ -299,7 +300,7 @@ def kvlm_parse(
     value = raw[spc + 1 : end].replace(b"\n ", b"\n")
 
     if key in dct:
-        if type(dct[key]) == list:
+        if dct[key] is list:
             dct[key].append(value)
         else:
             dct[key] = [dct[key], value]
@@ -313,10 +314,10 @@ def kvlm_serialize(kvlm: collections.OrderedDict) -> bytes:
     ret = b""
 
     for k in kvlm.keys():
-        if k == None:
+        if not k:
             continue
         val = kvlm[k]
-        if type(val) != list:
+        if val is not list:
             val = [val]
 
         for v in val:
@@ -346,13 +347,13 @@ def log_graphviz(repo: GitRepository, sha: str, seen: set) -> None:
 
     print(f'  c_{sha} [label="{short_hash}: {message}"]')
 
-    if not b"parent" in commit.kvlm.keys():
+    if b"parent" not in commit.kvlm.keys():
         # Base case, initial commit
         return
 
     parents = commit.kvlm[b"parent"]
 
-    if type(parents) != list:
+    if parents is not list:
         parents = [parents]
 
     # Recursive case
@@ -431,7 +432,8 @@ def ls_tree(repo: GitRepository, ref: str, recursive: bool = False, prefix: str 
 
         if not (recursive and type == "tree"):  # leaf node
             print(
-                f"{'0' * (6 - len(item.mode)) + item.mode.decode('ascii')} {type} {item.sha}\t{os.path.join(prefix, item.path)}"
+                f"{'0' * (6 - len(item.mode)) + item.mode.decode('ascii')}"
+                f"{type} {item.sha}\t{os.path.join(prefix, item.path)}"
             )
         else:  # recurse
             ls_tree(repo, item.sha, recursive, os.path.join(prefix, item.path))
