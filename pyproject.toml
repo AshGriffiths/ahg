@@ -1,13 +1,15 @@
 [tool.poetry]
-name = "wyag"
+name = "ahg"
 version = "0.1.0"
-description = ""
+description = "A basic git implementation"
 authors = ["Ash Griffiths <46426454+AshGriffiths@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 
+[tool.poetry.scripts]
+ahg = "ahg:main"
 
 [build-system]
 requires = ["poetry-core"]
